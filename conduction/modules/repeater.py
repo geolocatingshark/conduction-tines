@@ -74,4 +74,4 @@ def register(bot):
         message_create_repeater,
         message_update_repeater,
     ]:
-        bot.listen(event_handler)
+        bot.listen()(event_handler)
