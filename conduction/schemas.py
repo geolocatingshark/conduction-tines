@@ -1,8 +1,10 @@
 import asyncio
 
+from typing import List
+
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
-from sqlalchemy.sql.expression import select
+from sqlalchemy.sql.expression import select, delete
 from sqlalchemy.sql.schema import Column
 from sqlalchemy.sql.sqltypes import BigInteger
 
@@ -56,6 +58,11 @@ class MirroredMessage(Base):
         # Handle source_id not found
         dest_msgs = [] if dest_msgs is None else dest_msgs
         return dest_msgs
+
+    @classmethod
+    @utils.ensure_session(db_session)
+    async def delete_mirrored_msgs(cls, dest_msgs: List[int], session):
+        return await session.execute(delete(cls).where(cls.dest_msg.in_(dest_msgs)))
 
 
 async def recreate_all():

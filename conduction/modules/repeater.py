@@ -69,9 +69,28 @@ async def message_update_repeater(event: h.MessageUpdateEvent):
             logging.exception(e)
 
 
+async def message_delete_repeater(event: h.MessageDeleteEvent):
+    src_msg_id = event.message_id
+    bot = event.app
+
+    msgs_to_delete = await MirroredMessage.get_dest_msgs_and_channels(src_msg_id)
+    db_rows_to_delete = []
+
+    for src_msg_id, channel_id in msgs_to_delete:
+        try:
+            dest_msg = await bot.fetch_message(channel_id, src_msg_id)
+            await dest_msg.delete()
+            db_rows_to_delete.append(src_msg_id)
+        except Exception as e:
+            logging.exception(e)
+
+    await MirroredMessage.delete_mirrored_msgs(db_rows_to_delete)
+
+
 def register(bot):
     for event_handler in [
         message_create_repeater,
         message_update_repeater,
+        message_delete_repeater,
     ]:
         bot.listen()(event_handler)
